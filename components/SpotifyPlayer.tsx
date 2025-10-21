@@ -229,13 +229,19 @@ export default function SpotifyPlayer({
         v => v.timing < nextSegmentStart && v.timing > (currentBlock.musicContent[currentSegmentIndex]?.timing || 0)
       );
 
+      const nextUri = nextSegment.spotifyUri;
+      if (!nextUri) {
+        console.log('⚠️ Next segment has no Spotify URI');
+        return;
+      }
+
       if (voiceBeforeNext) {
         console.log('🎤 DJ update before next track');
-        playVoiceAndThenMusic(voiceBeforeNext, nextSegment.spotifyUri);
+        playVoiceAndThenMusic(voiceBeforeNext, nextUri);
       } else {
         // No voice, just play next track
         setTimeout(() => {
-          playTrack(nextSegment.spotifyUri, 0);
+          playTrack(nextUri, 0);
         }, 500);
       }
     } else {
@@ -323,9 +329,9 @@ export default function SpotifyPlayer({
       console.log('🎤 Currently in voice segment, skipping to next music...');
       // User joined during voice - skip to next music segment
       const nextMusic = currentBlock.musicContent.find(m => m.timing >= currentElapsed);
-      if (nextMusic) {
+      if (nextMusic?.spotifyUri) {
         const timer = setTimeout(() => {
-          playTrack(nextMusic.spotifyUri, 0);
+          playTrack(nextMusic.spotifyUri!, 0);
         }, (currentVoice.timing + currentVoice.duration - currentElapsed) * 1000);
         return () => clearTimeout(timer);
       }
@@ -431,8 +437,9 @@ export default function SpotifyPlayer({
               await fadeUpMusic();
               
               if (musicSegment?.spotifyUri) {
+                const uri = musicSegment.spotifyUri;
                 setTimeout(() => {
-                  playTrack(musicSegment.spotifyUri);
+                  playTrack(uri);
                 }, 300);
               }
           };
@@ -505,8 +512,11 @@ export default function SpotifyPlayer({
           console.log('🎵 Starting from beginning of block');
         }
 
+        const uri = targetSegment.spotifyUri;
+        if (!uri) return;
+
         const timer = setTimeout(() => {
-          playTrack(targetSegment.spotifyUri, positionMs);
+          playTrack(uri, positionMs);
         }, 1000);
 
         return () => clearTimeout(timer);
