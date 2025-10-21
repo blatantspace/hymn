@@ -480,10 +480,10 @@ export default function Dashboard() {
       };
 
       return {
-        current: currentMusic ? getTrackInfo(currentMusic.spotifyUri) : null,
+        current: currentMusic?.spotifyUri ? getTrackInfo(currentMusic.spotifyUri) : null,
         currentPosition: currentMusic ? position - currentMusic.timing : 0,
         currentDuration: currentMusic?.duration || 0,
-        next: nextMusic ? getTrackInfo(nextMusic.spotifyUri) : null,
+        next: nextMusic?.spotifyUri ? getTrackInfo(nextMusic.spotifyUri) : null,
       };
     };
 
