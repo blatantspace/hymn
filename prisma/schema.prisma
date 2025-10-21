@@ -1,0 +1,124 @@
+// Hymn Radio Timeline Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User account
+model User {
+  id                  String     @id @default(cuid())
+  spotifyId           String     @unique
+  email               String     @unique
+  spotifyAccessToken  String?
+  spotifyRefreshToken String?
+  spotifyTokenExpiry  DateTime?
+  googleAccessToken   String?
+  googleRefreshToken  String?
+  googleTokenExpiry   DateTime?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  
+  timelines           Timeline[]
+  musicProfile        MusicProfile?
+  preferences         UserPreferences?
+}
+
+// User preferences
+model UserPreferences {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  newsCategories     String[]
+  musicMoods         String[]
+  interruptionLevel  String   @default("moderate")
+  explorationLevel   String   @default("balanced") // familiar, balanced, explorative
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+// User's music taste profile
+model MusicProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topGenres     String[]
+  topArtistIds  String[]
+  topArtists    Json     // Array of {id, name, genres}
+  topTracks     Json     // Array of {id, name, uri, artist}
+  recentTracks  Json     // Recently played tracks
+  updatedAt     DateTime @updatedAt
+}
+
+// Daily radio timeline - one per user per day
+model Timeline {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            DateTime       // The day this timeline is for (date only, no time)
+  startTime       DateTime       // When timeline generation started
+  currentPosition DateTime       // Last known playhead position
+  generatedUntil  DateTime       // How far ahead is pre-generated
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  items           TimelineItem[]
+  
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+// Individual items in the timeline (tracks, voice segments)
+model TimelineItem {
+  id           String    @id @default(cuid())
+  timelineId   String
+  timeline     Timeline  @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+  
+  type         String    // "track" or "voice"
+  timestamp    DateTime  // Exact time this item starts
+  duration     Int       // Duration in seconds
+  locked       Boolean   @default(false) // true if in the past (immutable)
+  
+  // For music tracks
+  spotifyUri   String?
+  trackName    String?
+  artistName   String?
+  albumArt     String?
+  
+  // For voice segments
+  voiceContent String?
+  voiceAudioUrl String?
+  priority     String?   // low, medium, high
+  
+  // Metadata
+  mood         String?   // ambient, focus, energetic, etc.
+  volume       Float     @default(1.0)
+  fadeIn       Int       @default(0)
+  fadeOut      Int       @default(0)
+  
+  createdAt    DateTime  @default(now())
+  
+  @@index([timelineId, timestamp])
+  @@index([timestamp])
+}
+
+// Cached calendar events
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  eventId     String   // Google Calendar event ID
+  summary     String
+  description String?
+  start       DateTime
+  end         DateTime
+  location    String?
+  attendees   String[]
+  createdAt   DateTime @default(now())
+  
+  @@unique([userId, eventId])
+  @@index([userId, start])
+}
