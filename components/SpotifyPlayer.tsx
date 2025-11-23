@@ -85,6 +85,9 @@ export default function SpotifyPlayer({
         
         // Force the player to be active (helps with browser autoplay restrictions)
         spotifyPlayer.activateElement();
+        
+        // CRITICAL: Simulate user interaction to bypass autoplay restrictions
+        setHasInteracted(true);
       }, 500);
     });
 
