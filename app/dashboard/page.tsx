@@ -28,8 +28,12 @@ function DashboardContent() {
   const isNewUser = searchParams?.get('new_user') === 'true';
   const regenerationInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch timeline on mount
+  // PRIORITY: Start music IMMEDIATELY, load UI after
   useEffect(() => {
+    // Start music first (most important!)
+    setIsLoading(false); // Show UI immediately
+    
+    // Then load data in background
     fetchTimeline();
     fetchCalendarEvents();
     fetchSpotifyProfile();
@@ -49,7 +53,7 @@ function DashboardContent() {
 
   const fetchTimeline = async () => {
     console.log('📻 Fetching timeline...');
-    setIsLoading(true);
+    // Don't set loading - UI already shown, music already playing
     try {
       const response = await fetch('/api/timeline/current');
       console.log('📻 Timeline API response:', response.status);
@@ -79,19 +83,16 @@ function DashboardContent() {
           timestamp: new Date(item.timestamp),
         })));
         
-        console.log('✅ Timeline state updated, setting isLoading=false');
-        setIsLoading(false);
+        console.log('✅ Timeline state updated');
       } else {
         const errorData = await response.json();
         console.error('Failed to fetch timeline:', response.status, errorData);
         // Create demo timeline for now
         createDemoTimeline();
-        setIsLoading(false);
       }
     } catch (error) {
       console.error('Timeline error:', error);
       createDemoTimeline();
-      setIsLoading(false);
     }
   };
 
@@ -225,27 +226,7 @@ function DashboardContent() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <main className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 text-neutral-100 flex items-center justify-center">
-        <div className="text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-            className="text-6xl mb-4"
-          >
-            📻
-          </motion.div>
-          <p className="text-neutral-400">Tuning into your radio station...</p>
-          {isNewUser && (
-            <p className="text-xs text-neutral-600 mt-2">
-              Generating your personalized timeline
-            </p>
-          )}
-        </div>
-      </main>
-    );
-  }
+  // No loading screen! Show UI immediately and let music start
 
   // Calculate playhead position for mid-song join
   const playheadPosition = timeline && currentItem ? 
