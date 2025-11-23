@@ -232,8 +232,10 @@ function DashboardContent() {
   const playheadPosition = timeline && currentItem ? 
     calculateCurrentPlayhead(timeline.items) : null;
 
+  console.log('🎯 Current playhead:', playheadPosition);
+
   // Convert timeline to block format for SpotifyPlayer compatibility
-  const currentBlock: AudioBlock | null = currentItem ? {
+  const currentBlock: AudioBlock | null = currentItem && playheadPosition ? {
     id: 'current',
     startTime: currentItem.timestamp.toISOString(),
     endTime: new Date(currentItem.timestamp.getTime() + currentItem.duration * 1000).toISOString(),
@@ -245,11 +247,13 @@ function DashboardContent() {
       reasoning: `${currentItem.title} by ${currentItem.artist}`,
     },
     voiceContent: [],
-    musicContent: currentItem.spotifyUri ? [{
+    musicContent: currentItem.spotifyUri && playheadPosition ? [{
       timing: 0,
       duration: currentItem.duration,
       spotifyUri: currentItem.spotifyUri,
       volume: currentItem.volume,
+      // Store the position to start from
+      _startPositionMs: playheadPosition.positionInTrack,
     }] : [],
     generatedAt: new Date().toISOString(),
   } : null;
