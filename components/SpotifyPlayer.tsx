@@ -316,12 +316,28 @@ export default function SpotifyPlayer({
       blockId: currentBlock?.id,
       voiceCount: currentBlock?.voiceContent?.length || 0,
       musicCount: currentBlock?.musicContent?.length || 0,
+      startPositionMs: (currentBlock?.musicContent[0] as any)?._startPositionMs || 0,
     });
 
     if (!currentBlock || !deviceId || !hasInteracted) {
       console.log('⏸️ Waiting for block/device/user interaction...');
       return;
     }
+
+    // SIMPLIFIED AUTOPLAY: Just play the first track at the specified position
+    const firstMusic = currentBlock.musicContent[0];
+    if (firstMusic?.spotifyUri) {
+      const startPos = (firstMusic as any)._startPositionMs || 0;
+      console.log('🎵 AUTOPLAY:', firstMusic.spotifyUri, 'starting at', startPos + 'ms');
+      
+      const timer = setTimeout(() => {
+        playTrack(firstMusic.spotifyUri!, startPos);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+    
+    return; // Skip the old complex logic below
 
     // Check if we should be in a voice segment right now based on live position
     const currentElapsed = livePosition?.totalElapsed || 0;
