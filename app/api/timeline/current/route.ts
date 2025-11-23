@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrCreateTimeline, getCurrentItem, getUpcomingItems } from '@/lib/timelineEngine';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,6 +18,17 @@ export async function GET(request: NextRequest) {
 
     // For now, use a demo user ID (in production, this would come from session)
     const userId = 'demo-user';
+
+    // Make sure user exists first
+    await prisma.user.upsert({
+      where: { id: userId },
+      update: {},
+      create: {
+        id: userId,
+        spotifyId: userId,
+        email: 'demo@hymn.app',
+      },
+    });
 
     // Get or create today's timeline
     const timeline = await getOrCreateTimeline(userId, spotifyToken, googleToken);

@@ -124,7 +124,9 @@ export default function SpotifyPlayer({
     });
 
     spotifyPlayer.addListener('account_error', ({ message }: any) => {
-      console.error('❌ Account error:', message);
+      // Sometimes Spotify throws this on init but playback still works
+      console.warn('⚠️ Spotify account notice:', message);
+      // Don't treat as fatal error
     });
 
     spotifyPlayer.addListener('playback_error', ({ message }: any) => {
