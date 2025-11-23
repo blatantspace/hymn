@@ -162,13 +162,30 @@ async function generateTimelineItems(
     console.log(`🎯 ${currentTime.toLocaleTimeString()}: ${strategy.musicStyle} - ${musicRecommendation}`);
 
     // Get personalized tracks for this hour
-    const tracks = await getPersonalizedRecommendations(
-      spotifyToken,
-      musicProfile,
-      strategy.musicStyle,
-      preferences.explorationLevel as any || 'balanced',
-      15
-    );
+    // Try recommendations first, fall back to user's actual library
+    let tracks;
+    try {
+      tracks = await getPersonalizedRecommendations(
+        spotifyToken,
+        musicProfile,
+        strategy.musicStyle,
+        preferences.explorationLevel as any || 'balanced',
+        15
+      );
+    } catch (error) {
+      console.log('Using tracks from user library instead of recommendations');
+      // Use user's top tracks mixed with recent plays
+      tracks = [
+        ...musicProfile.topTracks.slice(0, 10),
+        ...musicProfile.recentlyPlayed.slice(0, 5),
+      ].map(t => ({
+        uri: t.uri,
+        name: t.name,
+        artists: [{ name: t.artist }],
+        duration_ms: 200000, // ~3:20
+        album: { images: [] },
+      }));
+    }
 
     // Add tracks to timeline
     let trackTime = new Date(currentTime);
