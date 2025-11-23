@@ -24,6 +24,7 @@ function DashboardContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentTrack, setCurrentTrack] = useState<any>(null);
   const [deviceId, setDeviceId] = useState<string>('');
+  const [spotifyProfile, setSpotifyProfile] = useState<any>(null);
   const isNewUser = searchParams?.get('new_user') === 'true';
   const regenerationInterval = useRef<NodeJS.Timeout | null>(null);
 
@@ -31,6 +32,7 @@ function DashboardContent() {
   useEffect(() => {
     fetchTimeline();
     fetchCalendarEvents();
+    fetchSpotifyProfile();
 
     // Set up 5-minute regeneration
     regenerationInterval.current = setInterval(() => {
@@ -167,6 +169,19 @@ function DashboardContent() {
     }
   };
 
+  const fetchSpotifyProfile = async () => {
+    try {
+      const response = await fetch('/api/spotify/profile');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('🎵 Spotify Profile:', data);
+        setSpotifyProfile(data);
+      }
+    } catch (error) {
+      console.log('⚠️ Could not fetch Spotify profile');
+    }
+  };
+
   const regenerateTimeline = async () => {
     if (!timeline) return;
     
@@ -261,13 +276,22 @@ function DashboardContent() {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-light">Hymn</h1>
             <div className="flex items-center gap-4">
+              {spotifyProfile && (
+                <div className={`text-xs px-3 py-1.5 rounded-full ${
+                  spotifyProfile.isPremium 
+                    ? 'bg-green-500/20 text-green-400' 
+                    : 'bg-red-500/20 text-red-400'
+                }`}>
+                  {spotifyProfile.isPremium ? '✓ Premium' : '⚠️ Free Account'}
+                </div>
+              )}
               {isNewUser && missedHours > 0 && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="text-xs px-3 py-1.5 bg-amber-500/20 text-amber-400 rounded-full"
                 >
-                  You missed {missedHours}+ hours of amazing music! 🎵
+                  You missed {missedHours}+ hours! 🎵
                 </motion.div>
               )}
               <button
