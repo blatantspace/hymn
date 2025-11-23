@@ -48,9 +48,12 @@ function DashboardContent() {
   }, []);
 
   const fetchTimeline = async () => {
+    console.log('📻 Fetching timeline...');
     setIsLoading(true);
     try {
       const response = await fetch('/api/timeline/current');
+      console.log('📻 Timeline API response:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
         console.log('📻 Timeline loaded:', data);
@@ -75,16 +78,19 @@ function DashboardContent() {
           ...item,
           timestamp: new Date(item.timestamp),
         })));
+        
+        console.log('✅ Timeline state updated, setting isLoading=false');
+        setIsLoading(false);
       } else {
         const errorData = await response.json();
         console.error('Failed to fetch timeline:', response.status, errorData);
         // Create demo timeline for now
         createDemoTimeline();
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('Timeline error:', error);
       createDemoTimeline();
-    } finally {
       setIsLoading(false);
     }
   };
