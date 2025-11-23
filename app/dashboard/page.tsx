@@ -7,6 +7,7 @@ import SpotifyPlayer from '@/components/SpotifyPlayer';
 import NowPlaying from '@/components/NowPlaying';
 import RadioTimeline from '@/components/RadioTimeline';
 import type { TimelineItem, CalendarEvent, AudioBlock } from '@/lib/types';
+import { calculateCurrentPlayhead, getUpcoming } from '@/lib/playhead';
 
 function DashboardContent() {
   const router = useRouter();
@@ -136,19 +137,17 @@ function DashboardContent() {
       currentPosition: now,
     });
     
-    // Find current item that should be playing NOW
-    const current = items.find((item, idx) => {
-      const itemStart = new Date(item.timestamp);
-      const itemEnd = new Date(itemStart.getTime() + item.duration * 1000);
-      return now >= itemStart && now < itemEnd;
-    }) || items.find(i => !i.locked);
+    // Use playhead calculator to find EXACTLY what should be playing now
+    const { currentItem: current, positionInTrack, percentComplete } = calculateCurrentPlayhead(items);
     
-    console.log('🎵 Current item:', current?.title);
-    setCurrentItem(current || items[items.length - 1]);
+    console.log('🎵 Playhead position:', {
+      track: current?.title,
+      positionMs: positionInTrack,
+      percent: percentComplete.toFixed(1) + '%',
+    });
     
-    const upcomingList = items.filter(i => new Date(i.timestamp) > now).slice(0, 10);
-    console.log('📋 Upcoming items:', upcomingList.length);
-    setUpcomingItems(upcomingList);
+    setCurrentItem(current);
+    setUpcomingItems(getUpcoming(items, 10));
   };
 
   const fetchCalendarEvents = async () => {
