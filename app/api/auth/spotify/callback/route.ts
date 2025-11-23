@@ -19,9 +19,10 @@ export async function GET(request: NextRequest) {
   try {
     const tokens = await getSpotifyTokens(code);
 
-    // Store tokens and redirect back to setup flow
+    // Store tokens and redirect DIRECTLY to dashboard (skip setup)
+    // Music will start playing immediately!
     const response = NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL}/setup?spotify_connected=true`
+      `${process.env.NEXTAUTH_URL}/dashboard?new_user=true`
     );
 
     // Set tokens in httpOnly cookies

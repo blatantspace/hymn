@@ -54,7 +54,9 @@ export async function getOrCreateTimeline(
 }
 
 /**
- * Create a new timeline from current time onwards
+ * Create a new timeline with FOMO history
+ * Generates from 8 AM today → now + 4 hours
+ * Everything before "now" is marked as "already aired" (locked)
  */
 async function createTimeline(
   userId: string,
@@ -65,21 +67,38 @@ async function createTimeline(
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
   
+  // Start timeline at 8 AM (when most people start their day)
+  const timelineStart = new Date(today);
+  timelineStart.setHours(8, 0, 0, 0);
+  
+  // If it's before 8 AM, use midnight
+  const startTime = now < timelineStart ? today : timelineStart;
+  
   const fourHoursAhead = new Date(now.getTime() + 4 * 60 * 60 * 1000);
+
+  console.log('📻 Creating FOMO timeline:', {
+    from: startTime.toLocaleString(),
+    now: now.toLocaleString(),
+    until: fourHoursAhead.toLocaleString(),
+    missedHours: Math.floor((now.getTime() - startTime.getTime()) / (1000 * 60 * 60)),
+  });
 
   // Create timeline record
   const timeline = await prisma.timeline.create({
     data: {
       userId,
       date: today,
-      startTime: now,
+      startTime: startTime,
       currentPosition: now,
       generatedUntil: fourHoursAhead,
     },
   });
 
-  // Generate timeline items
-  await generateTimelineItems(timeline.id, userId, now, fourHoursAhead, spotifyToken, googleToken);
+  // Generate "past" (8 AM → now) - locked, FOMO content
+  await generateTimelineItems(timeline.id, userId, startTime, now, spotifyToken, googleToken, true);
+  
+  // Generate "future" (now → +4 hours) - unlocked, flexible
+  await generateTimelineItems(timeline.id, userId, now, fourHoursAhead, spotifyToken, googleToken, false);
 
   return prisma.timeline.findUnique({
     where: { id: timeline.id },
@@ -89,6 +108,7 @@ async function createTimeline(
 
 /**
  * Generate timeline items for a time range
+ * @param lockAll - If true, marks all items as locked (for past/FOMO content)
  */
 async function generateTimelineItems(
   timelineId: string,
@@ -96,7 +116,8 @@ async function generateTimelineItems(
   startTime: Date,
   endTime: Date,
   spotifyToken: string,
-  googleToken?: string
+  googleToken?: string,
+  lockAll: boolean = false
 ) {
   // 1. Build user's music profile
   console.log('🎵 Building music profile for timeline...');
@@ -156,14 +177,14 @@ async function generateTimelineItems(
 
       items.push({
         timelineId,
-        type: 'track',
+        type: 'spotify_track', // Updated type for flexibility
         timestamp: new Date(trackTime),
         duration: Math.floor(track.duration_ms / 1000),
-        locked: trackTime < new Date(), // Lock if in the past
+        locked: lockAll || trackTime < new Date(), // Lock if generating past or if in the past
+        title: track.name,
+        artist: track.artists[0]?.name,
+        imageUrl: track.album?.images[0]?.url,
         spotifyUri: track.uri,
-        trackName: track.name,
-        artistName: track.artists[0]?.name,
-        albumArt: track.album?.images[0]?.url,
         mood: strategy.musicStyle,
         volume: strategy.musicVolume,
       });
@@ -181,7 +202,8 @@ async function generateTimelineItems(
         type: 'voice',
         timestamp: voiceTime,
         duration: voice.duration,
-        locked: voiceTime < new Date(),
+        locked: lockAll || voiceTime < new Date(),
+        title: 'DJ Update',
         voiceContent: voice.content,
         priority: voice.priority,
         mood: strategy.musicStyle,

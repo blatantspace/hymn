@@ -72,26 +72,31 @@ model Timeline {
   @@index([userId, date])
 }
 
-// Individual items in the timeline (tracks, voice segments)
+// Individual items in the timeline (flexible audio segments)
 model TimelineItem {
   id           String    @id @default(cuid())
   timelineId   String
   timeline     Timeline  @relation(fields: [timelineId], references: [id], onDelete: Cascade)
   
-  type         String    // "track" or "voice"
+  // Segment type - flexible for any audio source
+  type         String    // "spotify_track" | "audio_file" | "voice" | "live_stream" | "podcast"
   timestamp    DateTime  // Exact time this item starts
   duration     Int       // Duration in seconds
   locked       Boolean   @default(false) // true if in the past (immutable)
   
-  // For music tracks
-  spotifyUri   String?
-  trackName    String?
-  artistName   String?
-  albumArt     String?
+  // Universal fields
+  title        String?   // Track name, segment title, etc.
+  artist       String?   // Artist, speaker, host, etc.
+  imageUrl     String?   // Album art, thumbnail, avatar, etc.
   
-  // For voice segments
-  voiceContent String?
-  voiceAudioUrl String?
+  // Source-specific URIs (only one will be used)
+  spotifyUri   String?   // spotify:track:xxx
+  audioFileUrl String?   // https://cdn.../audio.mp3 or s3://bucket/file.mp3
+  streamUrl    String?   // https://stream.../live or rtmp://...
+  
+  // For AI-generated voice segments
+  voiceContent String?   // Text to be spoken
+  voiceAudioUrl String?  // Generated TTS audio URL
   priority     String?   // low, medium, high
   
   // Metadata
@@ -99,6 +104,9 @@ model TimelineItem {
   volume       Float     @default(1.0)
   fadeIn       Int       @default(0)
   fadeOut      Int       @default(0)
+  
+  // Additional metadata (JSON for flexibility)
+  metadata     Json?     // Any extra data (podcast episode #, live stream chat, etc.)
   
   createdAt    DateTime  @default(now())
   

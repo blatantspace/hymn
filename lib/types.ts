@@ -65,18 +65,29 @@ export interface UserPreferences {
   explorationLevel?: 'familiar' | 'balanced' | 'explorative';
 }
 
+export type AudioSegmentType = 
+  | 'spotify_track'
+  | 'audio_file'
+  | 'voice'
+  | 'live_stream'
+  | 'podcast';
+
 export interface TimelineItem {
   id: string;
-  type: 'track' | 'voice';
+  type: AudioSegmentType;
   timestamp: Date;
   duration: number;
   locked: boolean;
   
-  // Track fields
+  // Universal fields
+  title?: string;
+  artist?: string;
+  imageUrl?: string;
+  
+  // Source URIs (only one will be used)
   spotifyUri?: string;
-  trackName?: string;
-  artistName?: string;
-  albumArt?: string;
+  audioFileUrl?: string;
+  streamUrl?: string;
   
   // Voice fields
   voiceContent?: string;
@@ -85,6 +96,7 @@ export interface TimelineItem {
   
   mood?: string;
   volume: number;
+  metadata?: Record<string, any>;
 }
 
 export interface RadioTimeline {
