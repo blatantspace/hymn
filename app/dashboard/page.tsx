@@ -146,6 +146,11 @@ function DashboardContent() {
       percent: percentComplete.toFixed(1) + '%',
     });
     
+    // Store position for Spotify to start at
+    if (current) {
+      (current as any)._startPositionMs = positionInTrack;
+    }
+    
     setCurrentItem(current);
     setUpcomingItems(getUpcoming(items, 10));
   };
@@ -216,6 +221,10 @@ function DashboardContent() {
       </main>
     );
   }
+
+  // Calculate playhead position for mid-song join
+  const playheadPosition = timeline && currentItem ? 
+    calculateCurrentPlayhead(timeline.items) : null;
 
   // Convert timeline to block format for SpotifyPlayer compatibility
   const currentBlock: AudioBlock | null = currentItem ? {
@@ -352,6 +361,7 @@ function DashboardContent() {
           onPlayStateChange={setIsPlaying}
           onTrackChange={setCurrentTrack}
           onDeviceReady={setDeviceId}
+          livePosition={playheadPosition}
         />
       </div>
     </main>
