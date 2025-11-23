@@ -10,7 +10,6 @@ interface SpotifyPlayerProps {
   onTrackChange?: (track: any) => void;
   onDeviceReady?: (deviceId: string) => void;
   livePosition?: any; // Position to start from (for joining mid-broadcast)
-  hasInteracted?: boolean; // User has clicked to start
 }
 
 export default function SpotifyPlayer({
