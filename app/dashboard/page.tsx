@@ -73,15 +73,70 @@ function DashboardContent() {
           timestamp: new Date(item.timestamp),
         })));
       } else {
-        console.error('Failed to fetch timeline, using fallback');
-        // Fallback to old block system if timeline fails
-        router.push('/dashboard-fallback');
+        const errorData = await response.json();
+        console.error('Failed to fetch timeline:', response.status, errorData);
+        // Create demo timeline for now
+        createDemoTimeline();
       }
     } catch (error) {
       console.error('Timeline error:', error);
+      createDemoTimeline();
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const createDemoTimeline = () => {
+    console.log('📻 Creating demo timeline (fallback mode)');
+    const now = new Date();
+    const items: TimelineItem[] = [];
+    
+    // Create past items (8 AM to now)
+    const start = new Date(now);
+    start.setHours(8, 0, 0, 0);
+    
+    const demoTracks = [
+      { uri: 'spotify:track:3n3Ppam7vgaVa1iaRUc9Lp', name: 'Lofi Hip Hop', artist: 'Chillhop Music' },
+      { uri: 'spotify:track:5HCyWlXZPP0y6Gqq8TgA20', name: 'Focus Flow', artist: 'Study Music' },
+      { uri: 'spotify:track:0VjIjW4GlUZAMYd2vXMi3b', name: 'Calm Morning', artist: 'Peaceful Piano' },
+      { uri: 'spotify:track:6DCZcSspjsKoFjzjrWoCdn', name: 'Ambient Dreams', artist: 'Ethereal' },
+    ];
+    
+    let currentTime = new Date(start);
+    let itemId = 0;
+    
+    while (currentTime < new Date(now.getTime() + 4 * 60 * 60 * 1000)) {
+      const track = demoTracks[itemId % demoTracks.length];
+      const isPast = currentTime < now;
+      
+      items.push({
+        id: `demo-item-${itemId}`,
+        type: 'spotify_track',
+        timestamp: new Date(currentTime),
+        duration: 180,
+        locked: isPast,
+        title: track.name,
+        artist: track.artist,
+        spotifyUri: track.uri,
+        volume: 0.7,
+      });
+      
+      currentTime = new Date(currentTime.getTime() + 180 * 1000);
+      itemId++;
+    }
+    
+    setTimeline({
+      id: 'demo-timeline',
+      items,
+      currentPosition: now,
+    });
+    
+    // Find current item
+    const current = items.find(item => 
+      !item.locked && new Date(item.timestamp) <= now
+    );
+    setCurrentItem(current || items[items.length - 1]);
+    setUpcomingItems(items.filter(i => !i.locked).slice(1, 11));
   };
 
   const fetchCalendarEvents = async () => {
