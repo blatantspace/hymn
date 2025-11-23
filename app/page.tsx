@@ -76,11 +76,11 @@ export default function Home() {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="flex flex-col sm:flex-row gap-4 justify-center items-center"
         >
-          <Link href="/setup">
+          <a href="/api/auth/spotify">
             <button className="px-8 py-4 bg-neutral-100 text-neutral-900 rounded-full font-medium hover:bg-neutral-200 transition-colors text-lg min-w-[200px]">
               Get Started
             </button>
-          </Link>
+          </a>
           <button className="px-8 py-4 border border-neutral-700 text-neutral-100 rounded-full font-medium hover:border-neutral-600 hover:bg-neutral-900 transition-colors text-lg min-w-[200px]">
             Learn More
           </button>
