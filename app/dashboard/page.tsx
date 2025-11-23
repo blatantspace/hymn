@@ -175,6 +175,10 @@ function DashboardContent() {
       if (response.ok) {
         const data = await response.json();
         console.log('🎵 Spotify Profile:', data);
+        console.log('📧 Email:', data.email);
+        console.log('💳 Product:', data.product);
+        console.log('✅ Is Premium:', data.isPremium);
+        console.log('🔍 Full Profile:', data.rawProfile);
         setSpotifyProfile(data);
       }
     } catch (error) {

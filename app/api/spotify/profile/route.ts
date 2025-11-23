@@ -28,6 +28,14 @@ export async function GET(request: NextRequest) {
 
     const profile = await response.json();
 
+    console.log('🔍 Spotify API returned:', {
+      email: profile.email,
+      product: profile.product,
+      type: profile.type,
+      explicit_content: profile.explicit_content,
+      country: profile.country,
+    });
+
     return NextResponse.json({
       id: profile.id,
       email: profile.email,
@@ -35,6 +43,7 @@ export async function GET(request: NextRequest) {
       product: profile.product, // "premium" or "free"
       country: profile.country,
       isPremium: profile.product === 'premium',
+      rawProfile: profile, // Send full profile for debugging
     });
   } catch (error) {
     console.error('Profile fetch error:', error);
