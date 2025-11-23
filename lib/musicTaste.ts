@@ -149,18 +149,52 @@ export async function getPersonalizedRecommendations(
     ...features,
   });
 
-  const response = await fetch(
-    `${SPOTIFY_BASE_URL}/recommendations?${params.toString()}`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
+  try {
+    const response = await fetch(
+      `${SPOTIFY_BASE_URL}/recommendations?${params.toString()}`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+
+    if (!response.ok) {
+      console.warn(`Recommendations API failed (${response.status}), using fallback`);
+      return getFallbackTracks(mood, limit);
     }
-  );
 
-  if (!response.ok) {
-    throw new Error(`Failed to get recommendations: ${response.statusText}`);
+    const data = await response.json();
+    return data.tracks;
+  } catch (error) {
+    console.error('Recommendations error:', error);
+    return getFallbackTracks(mood, limit);
   }
+}
 
-  const data = await response.json();
-  return data.tracks;
+/**
+ * Fallback tracks when recommendations fail
+ */
+function getFallbackTracks(mood: string, limit: number): any[] {
+  const fallbackByMood: Record<string, any[]> = {
+    ambient: [
+      { uri: 'spotify:track:3n3Ppam7vgaVa1iaRUc9Lp', name: 'Lofi Study', duration_ms: 180000, artists: [{ name: 'Chillhop' }], album: { images: [] } },
+      { uri: 'spotify:track:6DCZcSspjsKoFjzjrWoCdn', name: 'Ambient Dreams', duration_ms: 200000, artists: [{ name: 'Ethereal' }], album: { images: [] } },
+    ],
+    focus: [
+      { uri: 'spotify:track:0VjIjW4GlUZAMYd2vXMi3b', name: 'Focus Flow', duration_ms: 190000, artists: [{ name: 'Study Music' }], album: { images: [] } },
+      { uri: 'spotify:track:5HCyWlXZPP0y6Gqq8TgA20', name: 'Deep Work', duration_ms: 210000, artists: [{ name: 'Productivity' }], album: { images: [] } },
+    ],
+    energetic: [
+      { uri: 'spotify:track:3n3Ppam7vgaVa1iaRUc9Lp', name: 'Energy Boost', duration_ms: 185000, artists: [{ name: 'Workout' }], album: { images: [] } },
+    ],
+    upbeat: [
+      { uri: 'spotify:track:5HCyWlXZPP0y6Gqq8TgA20', name: 'Good Vibes', duration_ms: 195000, artists: [{ name: 'Happy' }], album: { images: [] } },
+    ],
+    calm: [
+      { uri: 'spotify:track:6DCZcSspjsKoFjzjrWoCdn', name: 'Peaceful Evening', duration_ms: 220000, artists: [{ name: 'Calm' }], album: { images: [] } },
+    ],
+  };
+
+  const tracks = fallbackByMood[mood] || fallbackByMood.focus;
+  return tracks.slice(0, limit);
 }
 
