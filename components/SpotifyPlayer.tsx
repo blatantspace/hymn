@@ -19,12 +19,12 @@ export default function SpotifyPlayer({
   onTrackChange,
   onDeviceReady,
   livePosition,
-  hasInteracted,
 }: SpotifyPlayerProps) {
   const [player, setPlayer] = useState<any>(null);
   const [deviceId, setDeviceId] = useState<string>('');
   const [currentTrack, setCurrentTrack] = useState<any>(null);
   const [voiceComplete, setVoiceComplete] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const playerInitialized = useRef(false);
 
   useEffect(() => {
