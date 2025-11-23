@@ -96,10 +96,12 @@ function DashboardContent() {
     start.setHours(8, 0, 0, 0);
     
     const demoTracks = [
-      { uri: 'spotify:track:3n3Ppam7vgaVa1iaRUc9Lp', name: 'Lofi Hip Hop', artist: 'Chillhop Music' },
-      { uri: 'spotify:track:5HCyWlXZPP0y6Gqq8TgA20', name: 'Focus Flow', artist: 'Study Music' },
-      { uri: 'spotify:track:0VjIjW4GlUZAMYd2vXMi3b', name: 'Calm Morning', artist: 'Peaceful Piano' },
-      { uri: 'spotify:track:6DCZcSspjsKoFjzjrWoCdn', name: 'Ambient Dreams', artist: 'Ethereal' },
+      { uri: 'spotify:track:3n3Ppam7vgaVa1iaRUc9Lp', name: 'Mr. Brightside', artist: 'The Killers', image: 'https://i.scdn.co/image/ab67616d0000b273ccdddd46119a4ff53eaf1f5d' },
+      { uri: 'spotify:track:5HCyWlXZPP0y6Gqq8TgA20', name: 'Somebody Told Me', artist: 'The Killers', image: 'https://i.scdn.co/image/ab67616d0000b273ccdddd46119a4ff53eaf1f5d' },
+      { uri: 'spotify:track:0VjIjW4GlUZAMYd2vXMi3b', name: 'Blinding Lights', artist: 'The Weeknd', image: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36' },
+      { uri: 'spotify:track:6DCZcSspjsKoFjzjrWoCdn', name: 'Levitating', artist: 'Dua Lipa', image: 'https://i.scdn.co/image/ab67616d0000b273be841ba4bc24340152e3a79a' },
+      { uri: 'spotify:track:7qiZfU4dY1lWllzX7mPBI', name: 'Shape of You', artist: 'Ed Sheeran', image: 'https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96' },
+      { uri: 'spotify:track:60nZcImufyMA1MKQY3dcCH', name: 'As It Was', artist: 'Harry Styles', image: 'https://i.scdn.co/image/ab67616d0000b2732e8ed79e177ff6011076f5f0' },
     ];
     
     let currentTime = new Date(start);
@@ -113,17 +115,20 @@ function DashboardContent() {
         id: `demo-item-${itemId}`,
         type: 'spotify_track',
         timestamp: new Date(currentTime),
-        duration: 180,
+        duration: 204, // ~3:24 per song
         locked: isPast,
         title: track.name,
         artist: track.artist,
+        imageUrl: track.image,
         spotifyUri: track.uri,
         volume: 0.7,
       });
       
-      currentTime = new Date(currentTime.getTime() + 180 * 1000);
+      currentTime = new Date(currentTime.getTime() + 204 * 1000);
       itemId++;
     }
+    
+    console.log('✅ Created demo timeline with', items.length, 'items');
     
     setTimeline({
       id: 'demo-timeline',
@@ -131,12 +136,19 @@ function DashboardContent() {
       currentPosition: now,
     });
     
-    // Find current item
-    const current = items.find(item => 
-      !item.locked && new Date(item.timestamp) <= now
-    );
+    // Find current item that should be playing NOW
+    const current = items.find((item, idx) => {
+      const itemStart = new Date(item.timestamp);
+      const itemEnd = new Date(itemStart.getTime() + item.duration * 1000);
+      return now >= itemStart && now < itemEnd;
+    }) || items.find(i => !i.locked);
+    
+    console.log('🎵 Current item:', current?.title);
     setCurrentItem(current || items[items.length - 1]);
-    setUpcomingItems(items.filter(i => !i.locked).slice(1, 11));
+    
+    const upcomingList = items.filter(i => new Date(i.timestamp) > now).slice(0, 10);
+    console.log('📋 Upcoming items:', upcomingList.length);
+    setUpcomingItems(upcomingList);
   };
 
   const fetchCalendarEvents = async () => {
